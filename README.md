@@ -10,12 +10,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/maseklab/hb-cluster/actions/workflows/docker-publish.yml"><img src="https://img.shields.io/github/actions/workflow/status/maseklab/hb-cluster/docker-publish.yml?branch=main&label=build" alt="Build"></a>
-  <a href="https://github.com/maseklab/hb-cluster/releases/latest"><img src="https://img.shields.io/github/v/release/maseklab/hb-cluster?label=release&color=6366f1" alt="Latest release"></a>
-  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-manager"><img src="https://img.shields.io/badge/Docker-hb--manager-0284c7?logo=docker&logoColor=white" alt="Manager Docker image"></a>
-  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-worker"><img src="https://img.shields.io/badge/Docker-hb--worker-10b981?logo=docker&logoColor=white" alt="Worker Docker image"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-38bdf8" alt="MIT License"></a>
-  <a href="https://ko-fi.com/maseklab"><img src="https://img.shields.io/badge/Ko--fi-Support-f59e0b?logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+  <a href="https://github.com/maseklab/hb-cluster/actions/workflows/docker-publish.yml"><img src="https://github.com/maseklab/hb-cluster/actions/workflows/docker-publish.yml/badge.svg?branch=main" alt="Build"></a>
+  <a href="https://github.com/maseklab/hb-cluster/releases/latest"><img src="docs/badges/release.svg" alt="Latest release"></a>
+  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-manager"><img src="docs/badges/docker-manager.svg" alt="Manager Docker image"></a>
+  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-worker"><img src="docs/badges/docker-worker.svg" alt="Worker Docker image"></a>
+  <a href="LICENSE"><img src="docs/badges/license.svg" alt="MIT License"></a>
+  <a href="https://ko-fi.com/maseklab"><img src="docs/badges/kofi.svg" alt="Ko-fi"></a>
 </p>
 
 <p align="center">
