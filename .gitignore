@@ -1,0 +1,67 @@
+# Knihovny webu: node_modules z npm a vygenerované static/vendor (sestaví Dockerfile.manager)
+node_modules/
+static/vendor/
+
+# Python & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# Runtime Databases, Secrets & Local Configs
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+manager_config.json
+media_cache.json
+binary_versions.json
+config.json
+security.json
+worker_keys.json
+manager_identity.json
+worker_identity.json
+manager_binding.json
+*.pfx
+*.pass
+certs/
+data/
+backup/
+*.log
+
+# Compiled & Downloaded Binaries
+binaries/
+workers/bin/
+bin/
+HB_Temp/
+local_hold/
+ota_cache/
+
+# Temp & OS Artifacts
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+update_worker.bat
+# Windows OTA (O1): zálohy, zkušební složka a záznam o pokusu
+*.prev
+ota_stage/
+update_attempt.json
+update_result.json
+ota_ok.txt
+ota_pid.txt
+selftest_result.json
+
+# Local AI context & handoff files (never commit)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.ai_handoff.md
+Claude outputs/
+

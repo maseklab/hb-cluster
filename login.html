@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="__LANG__" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#020617">
+  <meta name="robots" content="noindex">
+  <title>HB Manager</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #020617; color: #e2e8f0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px 16px; }
+    body { flex-direction: column; gap: 18px; }
+    .card { width: 100%; max-width: 400px; background: #0f172a; border: 1px solid #1e293b; border-radius: 20px;
+      padding: 32px 28px 24px; box-shadow: 0 20px 50px rgba(0,0,0,.45), 0 0 60px rgba(25,224,200,.05); }
+    .logo { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 26px; }
+    .logo svg { width: 84px; height: 84px; margin-bottom: 14px; }
+    .logo .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5eead4; margin: 0 0 4px; }
+    .logo h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -.01em; color: #fff; }
+    .logo p { margin: 6px 0 0; font-size: 13px; color: #94a3b8; }
+    /* logo: po načtení se rohy (workery) postupně rozsvítí a zůstanou – cluster je „sestavený“ */
+    .lg-node { opacity: 0; animation: lgNode .45s ease-out forwards; }
+    .lg-node.n1 { animation-delay: .55s; } .lg-node.n2 { animation-delay: .7s; } .lg-node.n3 { animation-delay: .85s; } .lg-node.n0 { animation-delay: .4s; }
+    .lg-hub { transform-box: fill-box; transform-origin: center; animation: lgHub 1.1s ease-in-out .15s 1; }
+    .lg-ping { transform-box: fill-box; transform-origin: center; opacity: 0; animation: lgPing 1.1s ease-out .15s 1; }
+    @keyframes lgNode { to { opacity: 1; } }
+    @keyframes lgHub { 0%, 45%, 100% { transform: scale(1); } 18% { transform: scale(1.08); } }
+    @keyframes lgPing { 0% { opacity: .75; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(1.6); } }
+    @media (prefers-reduced-motion: reduce) { .lg-node { animation: none; opacity: 1; } .lg-hub, .lg-ping { animation: none; } }
+    .brand { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #7f8ea3; }
+    .brand svg { width: 16px; height: 16px; }
+    .brand b { color: #cbd5e1; font-weight: 800; } .brand b span { color: #34d399; }
+    label { display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin: 0 0 6px; }
+    input[type=password], input[type=text] { width: 100%; min-height: 46px; background: #090d16; border: 1px solid #334155;
+      border-radius: 10px; padding: 10px 12px; font-size: 16px; color: #f8fafc; outline: none; }
+    input[type=password]:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.18); }
+    .user { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .row { display: flex; align-items: center; gap: 10px; margin: 16px 0 18px; font-size: 13px; color: #cbd5e1; cursor: pointer; user-select: none; }
+    .row input { width: 18px; height: 18px; accent-color: #0ea5e9; cursor: pointer; }
+    .hint { font-size: 12px; color: #94a3b8; margin: -12px 0 18px 28px; line-height: 1.4; }
+    button { width: 100%; min-height: 46px; border: 0; border-radius: 10px; background: #0284c7; color: #fff;
+      font-size: 15px; font-weight: 800; cursor: pointer; transition: background .15s; }
+    button:hover:not(:disabled) { background: #0ea5e9; }
+    button:disabled { opacity: .55; cursor: default; }
+    .pk { display: none; margin-top: 10px; background: transparent; border: 1px solid #334155; color: #e2e8f0; }
+    .pk:hover:not(:disabled) { background: #1e293b; }
+    .or { display: none; margin: 14px 0 0; font-size: 12px; color: #94a3b8; text-align: center; }
+    .err { min-height: 18px; margin: 12px 0 0; font-size: 13px; font-weight: 700; color: #fda4af; text-align: center; }
+    .foot { margin-top: 20px; padding-top: 14px; border-top: 1px solid #1e293b; font-size: 12px; color: #8796ab; text-align: center; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">
+      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="lgG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38F29B"/><stop offset=".5" stop-color="#19E0C8"/><stop offset="1" stop-color="#16A8E8"/></linearGradient><mask id="lgM" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64"><rect width="64" height="64" fill="#fff"/><rect x="26" y="26" width="12" height="12" rx="2.6" fill="#000"/></mask></defs><path d="M22 22L16 16 M42 22L48 16 M22 42L16 48 M42 42L48 48" stroke="url(#lgG)" stroke-width="3.4" stroke-linecap="round"/><circle cx="11" cy="11" r="6" stroke="url(#lgG)" stroke-width="3.4"/><circle cx="53" cy="11" r="6" stroke="url(#lgG)" stroke-width="3.4"/><circle cx="11" cy="53" r="6" stroke="url(#lgG)" stroke-width="3.4"/><circle cx="53" cy="53" r="6" stroke="url(#lgG)" stroke-width="3.4"/><circle class="lg-node n0" cx="11" cy="11" r="6" fill="url(#lgG)"/><circle class="lg-node n1" cx="53" cy="11" r="6" fill="url(#lgG)"/><circle class="lg-node n2" cx="53" cy="53" r="6" fill="url(#lgG)"/><circle class="lg-node n3" cx="11" cy="53" r="6" fill="url(#lgG)"/><path d="M28 15V19 M36 15V19 M28 45V49 M36 45V49 M15 28H19 M15 36H19 M45 28H49 M45 36H49" stroke="url(#lgG)" stroke-width="3" stroke-linecap="round"/><rect class="lg-ping" x="19" y="19" width="26" height="26" rx="6" stroke="url(#lgG)" stroke-width="2"/><g class="lg-hub"><rect x="19" y="19" width="26" height="26" rx="6" fill="url(#lgG)" stroke="url(#lgG)" stroke-width="3.4" mask="url(#lgM)"/></g></svg>
+      <div class="eyebrow">HB Cluster</div>
+      <h1>HB Manager</h1>
+      <p id="sub"></p>
+    </div>
+    <form id="f" method="post" action="/api/auth/login" autocomplete="on">
+      <!-- jméno pro správce hesel (prohlížeč pak heslo nabídne uložit a příště vyplní) -->
+      <input class="user" type="text" name="username" autocomplete="username" value="admin" tabindex="-1" aria-hidden="true">
+      <label for="pw" id="pwl"></label>
+      <input id="pw" type="password" name="password" autocomplete="current-password" required autofocus>
+      <label class="row"><input id="rem" type="checkbox" name="remember" checked><span id="reml"></span></label>
+      <div class="hint" id="remh"></div>
+      <button id="btn" type="submit"></button>
+      <div class="or" id="or"></div>
+      <button id="pkbtn" class="pk" type="button"></button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+    <div class="foot" id="foot"></div>
+  </main>
+  <div class="brand"><svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="mlG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38F29B"/><stop offset="1" stop-color="#16A8E8"/></linearGradient></defs><path d="M10 50V15L22 33L34 15V50 M43 15V50H55" stroke="url(#mlG)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="50" r="5" fill="url(#mlG)"/><circle cx="34" cy="50" r="5" fill="url(#mlG)"/><circle cx="43" cy="15" r="5" fill="url(#mlG)"/><circle cx="55" cy="50" r="5" fill="url(#mlG)"/></svg><span>HB Cluster ·</span><b>Masek<span>Lab</span></b></div>
+  <script>
+    (function () {
+      var T = {
+        en: { sub: 'Sign in to manage your cluster', pw: 'Password', rem: 'Remember this device', remh: 'Stay signed in on this device for a year. Do not use on shared computers.',
+              btn: 'Sign in', or: 'or', pk: 'Sign in with a passkey (fingerprint / face)', pkfail: 'Passkey sign-in failed or was cancelled.', bad: 'Wrong password.', wait: 'Too many attempts. Try again in {0} s.', net: 'Manager is not reachable. Try again in a moment.',
+              foot: 'Forgot the password? Create an empty file reset_admin_password in the Manager /data folder, wait 10 seconds and reload this page.' },
+        cs: { sub: 'Přihlaste se ke správě clusteru', pw: 'Heslo', rem: 'Zapamatovat toto zařízení', remh: 'Na tomto zařízení zůstanete přihlášeni rok. Nepoužívejte na sdíleném počítači.',
+              btn: 'Přihlásit se', or: 'nebo', pk: 'Přihlásit se passkey (otisk prstu / obličej)', pkfail: 'Přihlášení passkey se nepovedlo nebo bylo zrušeno.', bad: 'Nesprávné heslo.', wait: 'Příliš mnoho pokusů. Zkuste to znovu za {0} s.', net: 'Manager není dostupný. Zkuste to za chvíli.',
+              foot: 'Zapomenuté heslo? Ve složce /data Manageru vytvořte prázdný soubor reset_admin_password, počkejte 10 sekund a obnovte stránku.' }
+      };
+      var lang = (document.documentElement.lang || 'en').slice(0, 2);
+      var t = T[lang] || T.en;
+      document.getElementById('sub').textContent = t.sub;
+      document.getElementById('pwl').textContent = t.pw;
+      document.getElementById('reml').textContent = t.rem;
+      document.getElementById('remh').textContent = t.remh;
+      document.getElementById('btn').textContent = t.btn;
+      document.getElementById('foot').textContent = t.foot;
+      var nextUrl = new URLSearchParams(location.search).get('next') || '/';
+      // jen cesta na tomto webu: ne „//cizi.web“ ani „/\cizi.web“ (prohlížeč z \ udělá /), ne ovládací znaky
+      if (!/^\/(?![\/\\])/.test(nextUrl) || /[\x00-\x1f]/.test(nextUrl)) nextUrl = '/';
+      // ---- PASSKEY (WebAuthn): tlačítko jen když Manager pro tuto doménu nějaký passkey má a prohlížeč to umí
+      var b2a = function (s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
+      var a2b = function (buf) { var u = new Uint8Array(buf), s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+      var pkbtn = document.getElementById('pkbtn');
+      pkbtn.textContent = t.pk;
+      document.getElementById('or').textContent = '— ' + t.or + ' —';
+      if (window.PublicKeyCredential && window.isSecureContext) {
+        fetch('/api/auth/status', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
+          if (d && d.passkeys > 0) { pkbtn.style.display = 'block'; document.getElementById('or').style.display = 'block'; }
+        }).catch(function () {});
+      }
+      pkbtn.addEventListener('click', function () {
+        err.textContent = ''; pkbtn.disabled = true;
+        fetch('/api/auth/passkey/options', { method: 'POST', credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (o) {
+          var pk = o.options; pk.challenge = b2a(pk.challenge);
+          (pk.allowCredentials || []).forEach(function (c) { c.id = b2a(c.id); });
+          return navigator.credentials.get({ publicKey: pk }).then(function (cr) {
+            var body = { challenge_id: o.challenge_id, remember: document.getElementById('rem').checked, credential: {
+              id: cr.id, rawId: a2b(cr.rawId), type: cr.type, clientExtensionResults: {},
+              response: { clientDataJSON: a2b(cr.response.clientDataJSON), authenticatorData: a2b(cr.response.authenticatorData),
+                          signature: a2b(cr.response.signature), userHandle: cr.response.userHandle ? a2b(cr.response.userHandle) : null } } };
+            return fetch('/api/auth/passkey/verify', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          });
+        }).then(function (r) {
+          if (r && r.ok) { location.replace(nextUrl); return; }
+          pkbtn.disabled = false; err.textContent = (r && r.status === 429) ? t.wait.replace('{0}', 60) : t.pkfail;
+        }).catch(function () { pkbtn.disabled = false; err.textContent = t.pkfail; });
+      });
+      var f = document.getElementById('f'), err = document.getElementById('err'), btn = document.getElementById('btn');
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        err.textContent = '';
+        btn.disabled = true;
+        fetch('/api/auth/login', {
+          method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: document.getElementById('pw').value, remember: document.getElementById('rem').checked })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; });
+        }).then(function (x) {
+          if (x.r.ok) {
+            // úspěch: prohlížeč si teď heslo nabídne uložit (formulář s username + current-password)
+            if (window.PasswordCredential) {
+              try { navigator.credentials.store(new PasswordCredential({ id: 'admin', password: document.getElementById('pw').value })).catch(function () {}); } catch (e2) {}
+            }
+            location.replace(nextUrl);
+            return;
+          }
+          btn.disabled = false;
+          if (x.r.status === 429) err.textContent = t.wait.replace('{0}', x.d.retry_after || 60);
+          else err.textContent = t.bad;
+          document.getElementById('pw').select();
+        }).catch(function () { btn.disabled = false; err.textContent = t.net; });
+      });
+    })();
+  </script>
+</body>
+</html>

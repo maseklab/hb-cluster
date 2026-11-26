@@ -1,0 +1,81 @@
+FROM python:3.11-slim-bookworm AS launcher-builder
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc-mingw-w64-x86-64 \
+    binutils-mingw-w64-x86-64 \
+    python3-pil \
+    && rm -rf /var/lib/apt/lists/*
+COPY VERSION /build/VERSION
+COPY workers/launcher_builder.py workers/worker_core.py /build/workers/
+COPY static/hbw.ico /build/static/hbw.ico
+RUN python3 /build/workers/launcher_builder.py /tmp/HBWorker_unsigned.exe /build/static/hbw.ico
+
+# Knihovny webového rozhraní: Vue + SortableJS z npm a Tailwind CSS sestavený z index.html / app.js.
+# Verze jsou v package.json (+ package-lock.json) a hlídá je Dependabot.
+FROM node:22-bookworm-slim AS web-builder
+WORKDIR /web
+COPY package.json package-lock.json tailwind.config.js ./
+RUN npm ci --no-audit --no-fund
+COPY web/ ./web/
+COPY index.html app.js ./
+RUN node web/build-vendor.js
+
+FROM python:3.11-slim-bookworm
+
+LABEL org.opencontainers.image.title="HB Cluster Manager"
+LABEL org.opencontainers.image.description="HB Cluster Web UI, Database & Central Binary Coordinator"
+LABEL org.opencontainers.image.source="https://github.com/maseklab/hb-cluster"
+LABEL org.opencontainers.image.version="2.12.0"
+LABEL com.centurylinklabs.watchtower.enable="false"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC \
+    HB_DATA_DIR=/data
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    wget \
+    gnupg \
+    osslsigncode \
+    openssl \
+    p7zip-full \
+    unzip \
+    xz-utils \
+    ffmpeg \
+    mkvtoolnix \
+    tzdata \
+    && (apt-get install -y --no-install-recommends handbrake-cli || true) \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=launcher-builder /tmp/HBWorker_unsigned.exe /app/prebuilt/HBWorker.exe
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+COPY VERSION /app/
+COPY main.py manager_core.py database.py models.py security.py /app/
+COPY index.html login.html app.js locales.js CHANGELOG.md README.md LICENSE THIRD-PARTY-NOTICES.md /app/
+COPY workers/ /app/workers/
+COPY static/ /app/static/
+# Knihovny webu (Vue, SortableJS, sestavený Tailwind CSS) z fáze web-builder – Manager nic nestahuje z CDN
+COPY --from=web-builder /web/static/vendor/ /app/static/vendor/
+
+# Trvalé binárky v /data/binaries (/app/binaries je jen zpětně kompatibilní symlink).
+# HBWorker.exe je předkompilován v první fázi (launcher-builder) a připraven v /app/prebuilt/HBWorker.exe.
+RUN mkdir -p /data/binaries/linux /data/binaries/windows /watch_dir /inputs /outputs \
+    && rm -rf /app/binaries && ln -s /data/binaries /app/binaries
+
+EXPOSE 8383/tcp
+EXPOSE 8383/udp
+
+STOPSIGNAL SIGTERM
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8383/api/update/version > /dev/null || exit 1
+
+CMD ["python", "main.py"]

@@ -1,0 +1,262 @@
+name: Publish Docker Images to GHCR
+
+# Distribution channels:
+#   main branch -> :latest (+ :<version from VERSION>)
+#   dev branch  -> :dev (dev only; :latest or version tag is never overwritten from dev)
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Push ${{ matrix.image }} (${{ github.ref_name }})
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-24.04  # pevně: druhý job instaluje MinGW / PIL / zip přes apt (ubuntu-latest přechází na 26)
+    # Pojistka vydání: obrazy se sestavují postupně – nejdřív hb-worker, pak hb-manager (pořadí v matrixu
+    # = pořadí spuštění, max-parallel 1). Když worker selže, fail-fast zruší čekající Manager → nikdy se
+    # nevydá Manager, ke kterému chybí obraz workeru stejné verze.
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        include:
+          - image: hb-worker
+            dockerfile: ./Dockerfile.worker
+          - image: hb-manager
+            dockerfile: ./Dockerfile.manager
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Single source of truth for version = VERSION file.
+      # The value is verified against the OCI label in both Dockerfiles and injected into
+      # org.opencontainers.image.version for GHCR API discovery.
+      - name: Resolve HB Cluster version
+        id: ver
+        run: |
+          VER=$(tr -d '[:space:]' < VERSION)
+          if [ -z "$VER" ]; then echo "::error::Version not found in VERSION" && exit 1; fi
+          for f in Dockerfile.manager Dockerfile.worker; do
+            grep -q "org.opencontainers.image.version=\"$VER\"" "$f" || { echo "::error::$f label != $VER"; exit 1; }
+          done
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          # :latest + :<version> only from main branch, :dev only from dev branch
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ steps.ver.outputs.version }},enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=semver,pattern={{version}}
+          labels: |
+            org.opencontainers.image.version=${{ steps.ver.outputs.version }}
+            com.centurylinklabs.watchtower.enable=false
+
+      # Pojistka: obraz se nejdřív sestaví lokálně a krátce spustí. Když program při startu spadne
+      # (např. chyba v kódu jako v dev.27 u Linux workeru), nic se nevydá a běh v Actions zčervená.
+      - name: Build ${{ matrix.image }} for smoke test (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          load: true
+          push: false
+          provenance: false
+          tags: hb-smoke/${{ matrix.image }}:ci
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ github.ref_name }}
+
+      - name: Smoke test – ${{ matrix.image }} must start without crashing
+        run: |
+          if [ "${{ matrix.image }}" = "hb-worker" ]; then
+            docker run -d --name smoke -e MANAGER_URL=http://127.0.0.1:9 -e WORKER_NAME=ci-smoke hb-smoke/hb-worker:ci
+            sleep 25
+          else
+            docker run -d --name smoke hb-smoke/hb-manager:ci
+            ok=0
+            for i in $(seq 1 30); do
+              if docker exec smoke curl -fsS http://127.0.0.1:8383/api/update/version >/dev/null 2>&1; then ok=1; break; fi
+              sleep 2
+            done
+            if [ "$ok" != "1" ]; then echo "::error::hb-manager did not answer on port 8383"; docker logs smoke 2>&1 | tail -80; exit 1; fi
+            for f in vue.global.prod.js Sortable.min.js hb-tailwind.css; do
+              docker exec smoke curl -fsS -o /dev/null "http://127.0.0.1:8383/static/vendor/$f" || { echo "::error::web library $f is missing in the image"; exit 1; }
+            done
+          fi
+          docker logs smoke > smoke.log 2>&1 || true
+          tail -40 smoke.log
+          running=$(docker inspect -f '{{.State.Running}}' smoke)
+          if [ "$running" != "true" ] || grep -q "Traceback (most recent call last)" smoke.log; then
+            echo "::error::${{ matrix.image }} crashed on start (see the log above)"
+            exit 1
+          fi
+          docker rm -f smoke >/dev/null
+
+      - name: Build and push ${{ matrix.image }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ github.ref_name }}
+
+  release-windows-worker:
+    name: Build & Publish HB-Worker-Windows.zip (GitHub Release)
+    permissions:
+      contents: write
+    needs: build
+    # Jen z tagu v*: push main + tag spouští dva běhy – vydání vzniká jednou, u správného commitu (tag z release.py)
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04  # pevně: druhý job instaluje MinGW / PIL / zip přes apt (ubuntu-latest přechází na 26)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install MinGW-w64 & Pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64 binutils-mingw-w64-x86-64 python3-pil zip
+
+      - name: Build HB-Worker-Windows.zip
+        id: winpkg
+        run: |
+          VER=$(tr -d '[:space:]' < VERSION)
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          mkdir -p dist_win/app
+          python3 workers/launcher_builder.py dist_win/HBWorker.exe static/hbw.ico
+          python3 workers/package_layout.py .
+
+          # Soubory balíčku podle jediného seznamu workers/package_layout.py (stejný používá Manager i OTA)
+          python3 -c '
+          import sys, pathlib
+          sys.path.insert(0, "workers")
+          import package_layout as pl
+          ver = pathlib.Path("VERSION").read_text(encoding="utf-8").strip()
+          for e in pl.WINDOWS_PACKAGE:
+              src = e["src"]
+              if src == "@version":
+                  data = (ver + "\n").encode("utf-8")
+              elif src.startswith("@"):
+                  continue
+              else:
+                  data = pathlib.Path(src).read_bytes()
+              if e.get("crlf"):
+                  data = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+              dst = pathlib.Path("dist_win") / e["path"]
+              dst.parent.mkdir(parents=True, exist_ok=True)
+              dst.write_bytes(data)
+          '
+
+          python3 -c '
+          import json, pathlib, textwrap
+          ver = pathlib.Path("VERSION").read_text(encoding="utf-8").strip()
+          cfg = {
+              "worker_name": "Win-Worker-1",
+              "server_url": "AUTO",
+              "manager_url": "AUTO",
+              "python_path": "",
+              "inputs_dir": "",
+              "outputs_dir": "",
+              "temp_dir": "",
+              "autostart_mode": "after_login",
+              "first_run_completed": False,
+              "power_mode": "AUTO",
+              "use_local_temp": True
+          }
+          pathlib.Path("dist_win/app/config.json").write_text(json.dumps(cfg, indent=4) + "\n", encoding="utf-8")
+
+          readme = textwrap.dedent(f"""
+              ==================================================================
+               HB CLUSTER - WINDOWS WORKER - v{ver} (GitHub Release)
+              ==================================================================
+
+              [EN] QUICK SETUP GUIDE:
+              1. Extract this entire ZIP archive into any folder (e.g. C:\\HBWorker).
+              2. Double-click \x27HBWorker.exe\x27 (or app\\Start_Worker.bat).
+              3. In the setup window, confirm first-run settings and click
+                 \x27Save Settings & Launch HB Worker\x27.
+              4. For a clean uninstall, run \x27Uninstall_Worker.bat\x27 (or choose Uninstall from worker menu).
+
+              [CZ] RYCHLÝ NÁVOD K INSTALACI:
+              1. Rozbalte celý tento ZIP archiv do libovolné složky (např. C:\\HBWorker).
+              2. Poklepejte na \x27HBWorker.exe\x27 (případně app\\Start_Worker.bat).
+              3. V otevřeném okně potvrďte nastavení prvního spuštění a klikněte na
+                 \x27Uložit nastavení a spustit HB Worker\x27.
+              4. Pro čistou odinstalaci spusťte \x27Uninstall_Worker.bat\x27 (nebo zvolte Odinstalovat v menu workeru).
+
+              ------------------------------------------------------------------
+              Default configuration / Výchozí konfigurace:
+               - Worker Name:  Win-Worker-1
+               - Manager URL:  AUTO (UDP 8383 LAN discovery)
+               - Language:     AUTO (Windows UI language, then Manager)
+               - Autostart:    after_login
+          """).strip() + "\n"
+          pathlib.Path("dist_win/README.txt").write_text(readme, encoding="utf-8")
+          '
+
+          (cd dist_win && zip -r -9 ../HB-Worker-Windows.zip .)
+          cp HB-Worker-Windows.zip "HB-Worker-Windows-v${VER}.zip"
+
+      - name: Publish to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VER="${{ steps.winpkg.outputs.version }}"
+          TAG="v${VER}"
+          # Release notes = sekce této verze z CHANGELOG.md (anglicky) + odkazy ke stažení; bez sekce obecný text
+          python3 - "$VER" > release_notes.md <<'PY'
+          import pathlib, re, sys
+          ver = sys.argv[1]
+          txt = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          m = re.search(r"^## \[" + re.escape(ver) + r"\][^\n]*\n(.*?)(?=^## \[|\Z)", txt, re.S | re.M)
+          body = m.group(1).strip() if m else "Distributed HandBrake video encoding cluster (Manager + Linux and Windows workers)."
+          print(body)
+          print()
+          print("### Downloads")
+          print("- **Windows worker (portable):** `HB-Worker-Windows.zip` – extract, run `HBWorker.exe` and click **Find** to discover your HB Manager on the LAN.")
+          print("- **Docker images:** `ghcr.io/maseklab/hb-manager:latest` and `ghcr.io/maseklab/hb-worker:latest` (also tagged `" + ver + "`).")
+          PY
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" HB-Worker-Windows.zip "HB-Worker-Windows-v${VER}.zip" --clobber
+            gh release edit "$TAG" --notes-file release_notes.md
+          else
+            gh release create "$TAG" HB-Worker-Windows.zip "HB-Worker-Windows-v${VER}.zip" --verify-tag \
+              --title "HB Cluster ${TAG}" \
+              --notes-file release_notes.md \
+              --latest
+          fi

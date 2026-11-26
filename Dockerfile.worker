@@ -1,0 +1,48 @@
+FROM python:3.11-slim-bookworm
+
+LABEL org.opencontainers.image.title="HB Cluster Linux Worker"
+LABEL org.opencontainers.image.description="HB Cluster Dedicated Headless Linux Video Encoding Worker"
+LABEL org.opencontainers.image.source="https://github.com/maseklab/hb-cluster"
+LABEL org.opencontainers.image.version="2.12.0"
+LABEL com.centurylinklabs.watchtower.enable="false"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    wget \
+    gnupg \
+    p7zip-full \
+    unzip \
+    xz-utils \
+    ffmpeg \
+    mkvtoolnix \
+    openssl \
+    osslsigncode \
+    gcc-mingw-w64-x86-64 \
+    build-essential \
+    binutils \
+    patchelf \
+    tzdata \
+    && (apt-get install -y --no-install-recommends handbrake-cli || true) \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-worker.txt /app/requirements-worker.txt
+RUN pip install --no-cache-dir -r /app/requirements-worker.txt
+
+COPY workers/ /app/workers/
+COPY VERSION LICENSE THIRD-PARTY-NOTICES.md /app/
+COPY VERSION /app/workers/
+
+RUN mkdir -p /inputs /outputs /data/temp /data/binaries /temp /app/workers/bin /app/workers/HB_Temp
+
+
+STOPSIGNAL SIGTERM
+
+CMD ["python", "/app/workers/worker_linux.py"]

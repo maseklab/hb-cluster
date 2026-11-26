@@ -1,0 +1,53 @@
+# Dependabot: jednou týdně zkontroluje nové verze a otevře pull request do větve dev.
+# Nic se neaktualizuje samo – PR se projde, otestuje a teprve pak sloučí.
+version: 2
+updates:
+  # GitHub Actions ve workflow (checkout, docker/build-push-action, …)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Knihovny webu (Vue, SortableJS, Tailwind CSS) – package.json / package-lock.json
+  - package-ecosystem: "npm"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      web:
+        patterns: ["*"]
+    ignore:
+      # Tailwind 4 a Vue 4 jsou velké změny – přechod jen ručně, s kontrolou vzhledu
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+
+  # Python knihovny Manageru (requirements.txt)
+  - package-ecosystem: "pip"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      python:
+        patterns: ["*"]
+
+  # Základní obrazy v Dockerfile.manager / Dockerfile.worker
+  - package-ecosystem: "docker"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

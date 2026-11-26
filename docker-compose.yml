@@ -1,0 +1,33 @@
+services:
+  hb-manager:
+    image: ghcr.io/maseklab/hb-manager:latest
+    container_name: hb-manager
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./data:/data                        # database, settings, logs, tools; Portainer / Synology / NAS: use an absolute path (e.g. /opt/hb_manager/data:/data or /volume1/docker/hb_manager/data:/data)
+      - /mnt/nas/inputs:/inputs:ro          # read-only: source videos are never modified
+      - /mnt/nas/outputs:/outputs
+      - /var/run/docker.sock:/var/run/docker.sock  # recommended: enables Manager-orchestrated 1-click/automatic updates without interrupting running jobs
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    environment:
+      - TZ=UTC                              # set your timezone, e.g. America/New_York, Europe/London
+
+  # Optional: Headless Linux Worker on the same or another machine
+  # hb-worker:
+  #   image: ghcr.io/maseklab/hb-worker:latest
+  #   container_name: hb-worker
+  #   restart: unless-stopped
+  #   labels:
+  #     - com.centurylinklabs.watchtower.enable=false
+  #   environment:
+  #     - MANAGER_URL=http://192.168.1.100:8383   # or AUTO (UDP discovery when network_mode: host)
+  #     - WORKER_NAME=Linux-Node-1
+  #     - TZ=UTC                                  # set your timezone (used for NIGHT power mode 22:00-06:00)
+  #   volumes:
+  #     - ./worker-data:/data                     # Separate worker storage (NEVER share ./data with hb-manager!); Portainer / NAS: use an absolute path (e.g. /opt/hb_worker/data:/data)
+  #     - /mnt/nas/inputs:/inputs:ro
+  #     - /mnt/nas/outputs:/outputs
+  #     # - /mnt/nvme/hb_temp:/temp               # Optional: separate fast NVMe scratch disk (otherwise /data/temp is used automatically)
+  #     - /var/run/docker.sock:/var/run/docker.sock  # recommended: enables Manager-orchestrated updates without interrupting running jobs

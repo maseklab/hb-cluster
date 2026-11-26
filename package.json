@@ -1,0 +1,16 @@
+{
+  "name": "hb-cluster-web",
+  "private": true,
+  "description": "Web UI libraries for HB Manager. Copied into /app/static/vendor during Docker image build so Manager works completely offline. Versions are tracked by Dependabot.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node web/build-vendor.js"
+  },
+  "dependencies": {
+    "sortablejs": "1.15.7",
+    "vue": "3.5.45"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.19"
+  }
+}
