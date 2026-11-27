@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: FAQ & Troubleshooting
+    url: https://github.com/maseklab/hb-cluster/blob/main/docs/faq.md
+    about: Check common setup, SMB, Docker and SmartScreen answers first.
+  - name: Report a security vulnerability
+    url: https://github.com/maseklab/hb-cluster/security/advisories/new
+    about: Please report security issues privately rather than opening a public issue.

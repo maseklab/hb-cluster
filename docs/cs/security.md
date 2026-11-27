@@ -2,7 +2,7 @@
 
 [← README](../../README.cs.md) · [English](../security.md)
 
-Všechno zde je **volitelné a ve výchozím stavu vypnuté** – domácí cluster v důvěryhodné síti funguje i bez toho. Počítejte ale s tím, že bez přihlášení může kdokoli ve vaší síti ovládat Manager, přečíst uložené SMB/NAS údaje určené pro Windows workery i nahrát vlastní nástroje v **Nastavení → Nástroje**. Jakmile uložíte SMB údaje nebo sdílíte síť s cizími zařízeními, doporučujeme zapnout přihlášení (případně s volbou *Z domácí sítě bez přihlášení*). Vše se nastavuje v **Nastavení → Zabezpečení**; přehled nahoře ukazuje přihlášení, schvalování workerů a čekající žádosti na jeden pohled.
+Přihlášení do webu a schvalování workerů jsou **doporučené a v úvodním průvodci ve výchozím stavu zapnuté**; pro domácí cluster v přísně důvěryhodné síti je ale můžete vypnout přímo v průvodci nebo kdykoli v **Nastavení → Zabezpečení**. Počítejte s tím, že bez přihlášení může kdokoli ve vaší síti ovládat Manager, přečíst uložené SMB/NAS údaje určené pro Windows workery i nahrát vlastní nástroje v **Nastavení → Nástroje**. Přihlášení proto doporučujeme nechat zapnuté (případně s volbou *Z domácí sítě bez přihlášení*) vždy, když ukládáte SMB údaje, připojujete `docker.sock` nebo sdílíte síť s cizími zařízeními. Vše se nastavuje v **Nastavení → Zabezpečení**; přehled nahoře ukazuje přihlášení, schvalování workerů a čekající žádosti na jeden pohled.
 
 ## Přihlášení do webu
 

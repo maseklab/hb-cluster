@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Česky](cs/security.md)
 
-Everything here is **optional and off by default** – a home cluster on a trusted LAN works without it. Keep in mind that without sign-in, anyone on your network can control the Manager, read any saved SMB/NAS credentials intended for Windows workers, and upload custom tools in **Settings → Tools**. Turn on web sign-in (optionally with *No sign-in from the home network* if you want passwordless access from your own PC) as soon as you store SMB credentials or share the network with untrusted devices. All settings are in **Settings → Security**; the overview at the top shows sign-in, worker approval and waiting requests at a glance.
+Web sign-in and worker approval are **recommended and enabled by default in the first-run wizard**, and can be switched off in the wizard or anytime in **Settings → Security** if you run a home cluster on a strictly trusted LAN. Keep in mind that without sign-in, anyone on your network can control the Manager, read any saved SMB/NAS credentials intended for Windows workers, and upload custom tools in **Settings → Tools**. Keep web sign-in enabled (optionally with *No sign-in from the home network* if you want passwordless access from your own PC) whenever you store SMB credentials, mount `docker.sock`, or share the network with untrusted devices. All settings are in **Settings → Security**; the overview at the top shows sign-in, worker approval and waiting requests at a glance.
 
 ## Web sign-in
 

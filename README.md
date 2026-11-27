@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Distributed HandBrake encoding for your home lab.</b><br/>
-  Tune every movie in HandBrake the way you want – and let all your computers encode it together.
+  Tune every movie in HandBrake the way you want – and spread your encoding queue across all your computers.
 </p>
 
 <p align="center">
@@ -37,11 +37,11 @@
 **HB Cluster** turns your Windows and Linux computers into one HandBrake encoding cluster. You prepare jobs in the familiar desktop **HandBrake** – preset, RF quality, crop, filters, audio and subtitle tracks for every movie – export the queue as `.json` and drop it into the **HB Manager** web interface. The Manager splits the work across all available machines, watches it, and the finished `.mkv` files end up where they belong.
 
 - 🎯 **Your settings, per title** – nothing is decided by a global rule; every job keeps exactly what you set in HandBrake. A whole folder with one preset works too.
-- 🖥️ **All your machines at once** – Windows PCs and laptops, Linux servers in Docker; jobs are distributed by **weighted slots** (4K = 4, 1080p = 2, SD = 1).
+- 🖥️ **All your machines at once** – Windows PCs and laptops, Linux servers in Docker; your queue is distributed across workers by **weighted slots** (4K = 4, 1080p = 2, SD = 1), with AUTO / ECO / E-core / NIGHT power modes so your desktop stays usable. *(Splitting one movie across workers is planned as Turbo mode.)*
 - 💿 **Blu-ray folders and `.iso`** – playlist (`.MPLS`) selection and optional Smart Pre-Mux (beta), lossless LPCM, DTS core, clean subtitles.
 - 📱 **One place to control it** – queue, monitoring, live logs, statistics; works on a phone and installs as an app.
 - 🔄 **Updates itself** – Manager and workers update with one click (or automatically); workers finish their current job first.
-- 🔒 **Optional security** – web sign-in, passkeys, approval of new workers. Off by default, see [Security](docs/security.md).
+- 🔒 **Web sign-in & worker approval** – password, passkeys, approval of new workers. Recommended in the first-run wizard (can be turned off for a trusted home LAN), see [Security](docs/security.md).
 
 ## How it works
 
@@ -57,7 +57,7 @@ I encode my movies in HandBrake on the CPU, because that gives the best picture 
 ## Quick start (about 5 minutes)
 
 1. **Start the Manager** in Docker (NAS, home server or any Linux machine) – compose below.
-2. Open **`http://<server>:8383`** – the 4-step first-run wizard sets the language and shared folders, helps add your first worker, lets you configure Video Processing (HandBrake vs. post-processing) and optional web sign-in.
+2. Open **`http://<server>:8383`** – the 4-step first-run wizard sets the language, web sign-in (recommended, can be turned off for a trusted LAN) and shared folders, helps add your first worker, and lets you configure Video Processing (HandBrake vs. post-processing).
 3. **Add a worker** – in the Manager open **Workers → +** (or step 2 of the wizard): download the pre-configured Windows package, or copy the generated Docker compose for Linux.
 4. In desktop **HandBrake** prepare your movies, add them to the queue and export it as `.json` (Queue window → **Export Queue**).
 5. **Drop the `.json` anywhere on the Manager page** (or click **+** above the queue) – encoding starts.
@@ -87,7 +87,7 @@ services:
       - ./data:/data                               # database, settings, logs, tools (NAS/Portainer: absolute path, e.g. /volume1/docker/hb_manager/data:/data)
       - /mnt/nas/inputs:/inputs:ro                 # source videos (read-only)
       - /mnt/nas/outputs:/outputs                  # finished .mkv files
-      - /var/run/docker.sock:/var/run/docker.sock  # recommended: Manager-orchestrated 1-click/automatic updates without interrupting running jobs
+      - /var/run/docker.sock:/var/run/docker.sock  # optional, recommended: Manager-orchestrated 1-click/automatic updates without interrupting running jobs (omit to update manually)
       # - ./watch_dir:/watch_dir                   # optional: folder for automatic .json queue import
     labels:
       - "com.centurylinklabs.watchtower.enable=false"  # updates are handled by HB Manager
