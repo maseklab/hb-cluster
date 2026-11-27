@@ -50,7 +50,7 @@ if _WORKERS_DIR_FOR_IMPORT not in sys.path:
     sys.path.insert(0, _WORKERS_DIR_FOR_IMPORT)
 import docker_selfupdate as dsu  # noqa: E402  (sdílený GHCR / docker.sock modul ve workers/)
 
-FALLBACK_VERSION = "2.12.1-dev.1"  # záloha pro chybějící VERSION, udržuje scripts/bump_version.py
+FALLBACK_VERSION = "2.12.1"  # záloha pro chybějící VERSION, udržuje scripts/bump_version.py
 
 
 def _load_app_version(fallback: str = FALLBACK_VERSION) -> str:
