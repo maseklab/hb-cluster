@@ -6,16 +6,16 @@
 
 <p align="center">
   <b>Distribuované kódování v HandBrake pro domácí lab.</b><br/>
-  Nastavte si každý film v HandBrake po svém – a nechte ho převádět všechny své počítače najednou.
+  Nastavte si každý film v HandBrake po svém – a rozložte frontu převodů mezi všechny své počítače.
 </p>
 
 <p align="center">
-  <a href="https://github.com/maseklab/hb-cluster/actions/workflows/docker-publish.yml"><img src="https://img.shields.io/github/actions/workflow/status/maseklab/hb-cluster/docker-publish.yml?branch=main&label=build" alt="Sestavení"></a>
-  <a href="https://github.com/maseklab/hb-cluster/releases/latest"><img src="https://img.shields.io/github/v/release/maseklab/hb-cluster?label=release&color=6366f1" alt="Poslední vydání"></a>
-  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-manager"><img src="https://img.shields.io/badge/Docker-hb--manager-0284c7?logo=docker&logoColor=white" alt="Docker obraz Manageru"></a>
-  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-worker"><img src="https://img.shields.io/badge/Docker-hb--worker-10b981?logo=docker&logoColor=white" alt="Docker obraz workeru"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-38bdf8" alt="Licence MIT"></a>
-  <a href="https://ko-fi.com/maseklab"><img src="https://img.shields.io/badge/Ko--fi-Podpora-f59e0b?logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+  <a href="https://github.com/maseklab/hb-cluster/actions/workflows/docker-publish.yml"><img src="https://github.com/maseklab/hb-cluster/actions/workflows/docker-publish.yml/badge.svg?branch=main" alt="Sestavení"></a>
+  <a href="https://github.com/maseklab/hb-cluster/releases/latest"><img src="docs/badges/release.svg" alt="Poslední vydání"></a>
+  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-manager"><img src="docs/badges/docker-manager.svg" alt="Docker obraz Manageru"></a>
+  <a href="https://github.com/maseklab/hb-cluster/pkgs/container/hb-worker"><img src="docs/badges/docker-worker.svg" alt="Docker obraz workeru"></a>
+  <a href="LICENSE"><img src="docs/badges/license.svg" alt="Licence MIT"></a>
+  <a href="https://ko-fi.com/maseklab"><img src="docs/badges/kofi-cs.svg" alt="Ko-fi"></a>
 </p>
 
 <p align="center">
@@ -37,11 +37,11 @@
 **HB Cluster** spojí vaše počítače s Windows a Linuxem do jednoho kódovacího clusteru pro HandBrake. Úlohy si připravíte v klasickém desktopovém **HandBrake** – preset, kvalitu RF, ořez, filtry, zvukové stopy a titulky pro každý film – frontu vyexportujete jako `.json` a přetáhnete do webového rozhraní **HB Manageru**. Manager práci rozdělí mezi všechny dostupné stroje, pohlídá ji a hotové `.mkv` uloží tam, kam patří.
 
 - 🎯 **Vaše nastavení pro každý film** – nic nerozhoduje jedno společné pravidlo, každá úloha si nese přesně to, co jste nastavili v HandBrake. Jde i celá složka s jedním presetem.
-- 🖥️ **Všechny stroje najednou** – Windows počítače a notebooky, Linux servery v Dockeru; úlohy se rozdělují podle **vážených slotů** (4K = 4, 1080p = 2, SD = 1).
+- 🖥️ **Všechny stroje najednou** – Windows počítače a notebooky, Linux servery v Dockeru; fronta se rozděluje mezi workery podle **vážených slotů** (4K = 4, 1080p = 2, SD = 1) a režimy výkonu AUTO / ECO / E-cores / NIGHT nechají počítač použitelný i při práci. *(Rozdělení jednoho filmu na části je v plánu jako režim Turbo.)*
 - 💿 **Blu-ray složky a `.iso`** – výběr playlistu (`.MPLS`) a volitelný Smart Pre-Mux (beta), bezztrátové LPCM, DTS core, čisté titulky.
 - 📱 **Ovládání z jednoho místa** – fronta, monitoring, živé logy, statistiky; funguje i na mobilu a jde nainstalovat jako aplikace.
 - 🔄 **Aktualizuje se sám** – Manager i workery jedním klepnutím (nebo automaticky); workery napřed dokončí rozpracovanou úlohu.
-- 🔒 **Volitelné zabezpečení** – přihlášení do webu, passkeys, schvalování nových workerů. Ve výchozím stavu vypnuté, viz [Zabezpečení](docs/cs/security.md).
+- 🔒 **Přihlášení do webu a schvalování workerů** – heslo, passkeys, schvalování nových workerů. Doporučené v úvodním průvodci (v důvěryhodné domácí síti jde vypnout), viz [Zabezpečení](docs/cs/security.md).
 
 ## Jak to funguje
 
@@ -57,7 +57,7 @@ Filmy převádím v HandBrake přímo na procesoru, protože tak dostanu nejlep�
 ## Rychlý start (asi 5 minut)
 
 1. **Spusťte Manager** v Dockeru (NAS, domácí server nebo jakýkoli Linux) – compose níže.
-2. Otevřete **`http://<server>:8383`** – 4krokový úvodní průvodce nastaví jazyk a sdílené složky, pomůže přidat první worker, umožní nastavit zpracování videa (HandBrake vs. post-processing) a volitelně přihlášení do webu.
+2. Otevřete **`http://<server>:8383`** – 4krokový úvodní průvodce nastaví jazyk, přihlášení do webu (doporučené, v důvěryhodné LAN jde vypnout) a sdílené složky, pomůže přidat první worker a umožní nastavit zpracování videa (HandBrake vs. post-processing).
 3. **Přidejte worker** – v Manageru **Workery → +** (nebo 2. krok průvodce): stáhněte předvyplněný balíček pro Windows, nebo zkopírujte vygenerovaný Docker compose pro Linux.
 4. V desktopovém **HandBrake** připravte filmy, přidejte je do fronty a vyexportujte ji jako `.json` (okno Fronta → **Exportovat frontu**).
 5. **Přetáhněte `.json` kamkoli na stránku Manageru** (nebo klepněte na **+** nad frontou) – převod začne.
@@ -87,7 +87,7 @@ services:
       - ./data:/data                               # databáze, nastavení, logy, nástroje (NAS/Portainer: absolutní cesta, např. /volume1/docker/hb_manager/data:/data)
       - /mnt/nas/inputs:/inputs:ro                 # zdrojová videa (jen pro čtení)
       - /mnt/nas/outputs:/outputs                  # hotové .mkv
-      - /var/run/docker.sock:/var/run/docker.sock  # doporučeno: aktualizace jedním klepnutím / automaticky řízené Managerem bez ohrožení běžících úloh
+      - /var/run/docker.sock:/var/run/docker.sock  # volitelné, doporučeno: aktualizace jedním klepnutím / automaticky řízené Managerem bez přerušení běžících úloh (vynechte pro ruční aktualizace)
       # - ./watch_dir:/watch_dir                   # volitelné: složka pro automatický import front .json
     labels:
       - "com.centurylinklabs.watchtower.enable=false"  # aktualizace řídí HB Manager

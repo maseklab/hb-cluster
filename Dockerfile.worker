@@ -3,7 +3,7 @@ FROM python:3.11-slim-bookworm
 LABEL org.opencontainers.image.title="HB Cluster Linux Worker"
 LABEL org.opencontainers.image.description="HB Cluster Dedicated Headless Linux Video Encoding Worker"
 LABEL org.opencontainers.image.source="https://github.com/maseklab/hb-cluster"
-LABEL org.opencontainers.image.version="2.12.0"
+LABEL org.opencontainers.image.version="2.12.1"
 LABEL com.centurylinklabs.watchtower.enable="false"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

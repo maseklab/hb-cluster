@@ -3472,6 +3472,44 @@ Core UI Architecture:
           </div>
         </div>
 
+        <!-- PŘIHLÁŠENÍ DO WEBU (doporučené v průvodci, lze vypnout pro důvěryhodnou LAN) -->
+        <div class="hb-well p-4 space-y-3" :class="secInfo.enabled ? 'border-emerald-800/70 bg-emerald-950/15' : (onbSecWantEnable ? 'border-sky-600/70 bg-sky-950/15' : 'border-slate-800')">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5 min-w-0">
+              <span class="ico-box shrink-0 mt-0.5" :class="secInfo.enabled ? 'text-emerald-400' : (onbSecWantEnable ? 'text-sky-400' : 'text-slate-400')" v-html="ico('shield', 'w-5 h-5')"></span>
+              <div>
+                <div class="font-bold text-sm flex items-center gap-2 flex-wrap" :class="secInfo.enabled ? 'text-emerald-300' : 'text-slate-100'">
+                  <span>{{ secInfo.enabled ? t('onb_sec_done') : t('onb_sec_hdr') }}</span>
+                  <span v-if="!secInfo.enabled" class="bg-sky-500/20 text-sky-300 border border-sky-500/40 font-mono font-bold text-[10px] px-1.5 py-0.5 rounded">{{ t('onb_sec_rec_badge') }}</span>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{{ secInfo.enabled ? t('onb_sec_done_desc') : (onbSecWantEnable ? t('onb_sec_desc') : t('onb_sec_off_note')) }}</div>
+              </div>
+            </div>
+            <button v-if="!secInfo.enabled" type="button" role="switch" :aria-checked="Boolean(onbSecWantEnable)" :aria-label="t('onb_sec_hdr')" @click="onbSecWantEnable = !onbSecWantEnable" class="shrink-0 mt-0.5 cursor-pointer">
+              <div :class="onbSecWantEnable ? 'bg-sky-600' : 'bg-slate-700'" class="hb-sw"><div :class="onbSecWantEnable ? 'translate-x-5' : 'translate-x-0'" class="hb-sw-knob"></div></div>
+            </button>
+          </div>
+          <form v-if="!secInfo.enabled && onbSecWantEnable" @submit.prevent="securityEnable()" class="space-y-3" autocomplete="on">
+            <input type="text" name="username" autocomplete="username" value="admin" class="hidden" tabindex="-1" aria-hidden="true">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-300 mb-1 font-semibold" for="onb_sec_new1">{{ t('sec_pw_new_lbl') }}</label>
+                <input id="onb_sec_new1" type="password" name="new-password" autocomplete="new-password" v-model="secForm.new1" class="w-full hb-field">
+              </div>
+              <div>
+                <label class="block text-slate-300 mb-1 font-semibold" for="onb_sec_new2">{{ t('sec_pw_repeat_lbl') }}</label>
+                <input id="onb_sec_new2" type="password" name="new-password-repeat" autocomplete="new-password" v-model="secForm.new2" class="w-full hb-field">
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span class="text-[11px] text-slate-400">{{ t('onb_sec_skip_hint') }}</span>
+              <button type="submit" :disabled="secForm.busy || !secForm.new1" class="bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-black px-4 min-h-[38px] rounded-lg flex items-center justify-center gap-2 cursor-pointer transition shrink-0">
+                <span class="ico-box" v-html="ico('shield', 'w-4 h-4')"></span><span>{{ t('sec_enable_btn') }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div class="hb-well p-4 space-y-3 border-slate-800">
           <div class="flex items-center justify-between gap-2 flex-wrap">
             <div>
@@ -3516,35 +3554,6 @@ Core UI Architecture:
               <strong>{{ r.label }}:</strong> {{ r.detail }}
             </div>
           </div>
-        </div>
-        <!-- PŘIHLÁŠENÍ DO WEBU (volitelné; totéž co Nastavení → Zabezpečení) -->
-        <div class="hb-well p-4 space-y-3" :class="secInfo.enabled ? 'border-emerald-800/70' : 'border-slate-800'">
-          <div class="flex items-start gap-2.5">
-            <span class="ico-box shrink-0 mt-0.5" :class="secInfo.enabled ? 'text-emerald-400' : 'text-sky-400'" v-html="ico('shield', 'w-5 h-5')"></span>
-            <div>
-              <div class="font-bold text-sm" :class="secInfo.enabled ? 'text-emerald-300' : 'text-slate-100'">{{ secInfo.enabled ? t('onb_sec_done') : t('onb_sec_hdr') }}</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">{{ secInfo.enabled ? t('onb_sec_done_desc') : t('onb_sec_desc') }}</div>
-            </div>
-          </div>
-          <form v-if="!secInfo.enabled" @submit.prevent="securityEnable()" class="space-y-3" autocomplete="on">
-            <input type="text" name="username" autocomplete="username" value="admin" class="hidden" tabindex="-1" aria-hidden="true">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-slate-300 mb-1 font-semibold" for="onb_sec_new1">{{ t('sec_pw_new_lbl') }}</label>
-                <input id="onb_sec_new1" type="password" name="new-password" autocomplete="new-password" v-model="secForm.new1" class="w-full hb-field">
-              </div>
-              <div>
-                <label class="block text-slate-300 mb-1 font-semibold" for="onb_sec_new2">{{ t('sec_pw_repeat_lbl') }}</label>
-                <input id="onb_sec_new2" type="password" name="new-password-repeat" autocomplete="new-password" v-model="secForm.new2" class="w-full hb-field">
-              </div>
-            </div>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span class="text-[11px] text-slate-500">{{ t('onb_sec_skip_hint') }}</span>
-              <button type="submit" :disabled="secForm.busy || !secForm.new1" class="bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-black px-4 min-h-[38px] rounded-lg flex items-center justify-center gap-2 cursor-pointer transition shrink-0">
-                <span class="ico-box" v-html="ico('shield', 'w-4 h-4')"></span><span>{{ t('sec_enable_btn') }}</span>
-              </button>
-            </div>
-          </form>
         </div>
       </div>
 

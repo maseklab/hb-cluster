@@ -8,7 +8,7 @@ services:
       - ./data:/data                        # database, settings, logs, tools; Portainer / Synology / NAS: use an absolute path (e.g. /opt/hb_manager/data:/data or /volume1/docker/hb_manager/data:/data)
       - /mnt/nas/inputs:/inputs:ro          # read-only: source videos are never modified
       - /mnt/nas/outputs:/outputs
-      - /var/run/docker.sock:/var/run/docker.sock  # recommended: enables Manager-orchestrated 1-click/automatic updates without interrupting running jobs
+      - /var/run/docker.sock:/var/run/docker.sock  # optional, recommended: Manager-orchestrated 1-click/automatic updates without interrupting running jobs (omit to update manually)
     labels:
       - com.centurylinklabs.watchtower.enable=false
     environment:
@@ -30,4 +30,4 @@ services:
   #     - /mnt/nas/inputs:/inputs:ro
   #     - /mnt/nas/outputs:/outputs
   #     # - /mnt/nvme/hb_temp:/temp               # Optional: separate fast NVMe scratch disk (otherwise /data/temp is used automatically)
-  #     - /var/run/docker.sock:/var/run/docker.sock  # recommended: enables Manager-orchestrated updates without interrupting running jobs
+  #     - /var/run/docker.sock:/var/run/docker.sock  # optional, recommended: Manager-orchestrated updates without interrupting running jobs (omit to update manually)

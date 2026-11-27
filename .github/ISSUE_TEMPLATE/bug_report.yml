@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a problem with HB Manager or a Windows / Linux worker
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! For **security vulnerabilities**, please do not open a public issue – use **Security → Report a vulnerability** instead (see `SECURITY.md`).
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      options:
+        - HB Manager (Docker)
+        - Windows worker
+        - Linux worker (Docker)
+        - Web UI (desktop / mobile)
+        - Updates / Installation
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: HB Cluster version
+      description: Shown in the Manager header or worker window (e.g. 2.12.0, 2.12.1).
+      placeholder: "2.12.1"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment (OS / NAS / Docker)
+      description: E.g. Synology DSM 7.2 + Docker Compose, Debian 12, Windows 11 24H2.
+      placeholder: "Debian 12 (Manager), Windows 11 (Worker)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Clear description of the bug and what you expected to happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste lines from Live Logs, `cluster_manager.log`, `docker logs`, or the Windows worker log. Remove any passwords or private hostnames.
+      render: text

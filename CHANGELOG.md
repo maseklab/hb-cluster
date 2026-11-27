@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to HB Cluster (HB Manager and HB Workers) are documented in this file. The format is based on Keep a Changelog and the project uses Semantic Versioning.
 
+## [2.12.1] - 2026-11-27
+### Changed
+- **First-run wizard security:** Web sign-in and worker approval are now recommended and enabled by default in Step 1 of the onboarding wizard, with a single toggle to turn them off for a trusted home LAN (and still configurable anytime in Settings → Security).
+- **Documentation & repository:** Local SVG README badges, clarified queue distribution vs. planned Turbo mode, clarified that `/var/run/docker.sock` is optional (recommended for zero-interruption self-updates), enabled GitHub Sponsors, and added structured GitHub issue templates.
+
 ## [2.12.0] - 2026-11-26
 The biggest update since 2.11: optional web sign-in with worker approval, safe self-updates with automatic rollback, a Windows worker that starts before you sign in to Windows, and a reworked web interface for desktop and mobile.
 

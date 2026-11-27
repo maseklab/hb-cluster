@@ -14,7 +14,7 @@ Jednorázový čistý start historie (před zveřejněním repozitáře):
 
 Kroky:
   1. kontrola: aktuální větev dev, žádné necommitnuté změny
-  2. scripts/bump_version.py <verze>
+  2. scripts/bump_version.py <verze> + odznak docs/badges/release.svg (scripts/badges.py)
   3. CHANGELOG.md: "## [<verze>] - Unreleased" -> "## [<verze>] - <datum>" (sekce verze musí existovat)
   4. commit na dev "Release v<verze>"
   5a. běžné vydání: main <- squash dev ("HB Cluster v<verze>"), tag v<verze>,
@@ -67,6 +67,14 @@ def update_changelog(ver: str, date_s: str, apply: bool) -> None:
         raise SystemExit(f"[x] CHANGELOG.md nemá sekci '## [{ver}] - Unreleased'. Nejdřív ji doplň (anglicky, jen pro uživatele).")
 
 
+def _release_badge(ver: str) -> None:
+    # odznak „release“ v README je lokální SVG (README nezávisí na shields.io)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import badges
+    for c in badges.write_all(ver):
+        print(f"  [✓] {c}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Připraví vydání HB Cluster lokálně (bez pushe).")
     ap.add_argument("version", help="verze vydání, např. 2.12.0 (bez -dev)")
@@ -102,6 +110,7 @@ def main() -> int:
     # 2.–4. verze, CHANGELOG, commit na dev
     step(apply, f"scripts/bump_version.py {ver}",
          lambda: subprocess.run([sys.executable, str(ROOT / "scripts" / "bump_version.py"), ver], cwd=ROOT, check=True))
+    step(apply, f"docs/badges/release.svg -> v{ver}", lambda: _release_badge(ver))
     update_changelog(ver, date_s, apply)
 
     def _commit_dev():

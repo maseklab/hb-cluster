@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="119" height="20" role="img" aria-label="release: v2.12.1">
+<title>release: v2.12.1</title>
+<defs>
+<linearGradient id="l" x1="50%" y1="0%" x2="50%" y2="100%"><stop stop-color="#444D56" offset="0%"/><stop stop-color="#24292E" offset="100%"/></linearGradient>
+<linearGradient id="r" x1="50%" y1="0%" x2="50%" y2="100%"><stop stop-color="#7F82F4" offset="0%"/><stop stop-color="#6366F1" offset="100%"/></linearGradient>
+</defs>
+<path fill="url(#l)" d="M3 0h64v20H3a3 3 0 0 1-3-3V3a3 3 0 0 1 3-3z"/>
+<path fill="url(#r)" d="M67 0h49a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3h-49z"/>
+<g font-family="'DejaVu Sans',Verdana,Geneva,sans-serif" font-size="11"><text fill="#010101" fill-opacity=".3" aria-hidden="true" x="22" textLength="40.4" lengthAdjust="spacingAndGlyphs" y="15">release</text><text fill="#FFFFFF" x="22" textLength="40.4" lengthAdjust="spacingAndGlyphs" y="14">release</text><text fill="#010101" fill-opacity=".3" aria-hidden="true" x="72" textLength="41.5" lengthAdjust="spacingAndGlyphs" y="15">v2.12.1</text><text fill="#FFFFFF" x="72" textLength="41.5" lengthAdjust="spacingAndGlyphs" y="14">v2.12.1</text></g>
+<path transform="translate(4 3) scale(0.875)" fill="#959DA5" fill-rule="evenodd" d="M1 1.75C1 1.34 1.34 1 1.75 1h5.6c.2 0 .39.08.53.22l7.4 7.4a.75.75 0 0 1 0 1.06l-5.6 5.6a.75.75 0 0 1-1.06 0l-7.4-7.4A.75.75 0 0 1 1 7.35zM4.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+</svg>

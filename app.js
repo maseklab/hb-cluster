@@ -296,6 +296,7 @@ createApp({
       showOnboardingModal: false,
       stateLoaded: false,            // true po prvním načtení stavu → do té doby neukazovat „0 online“, průvodce ani „Fronta je prázdná“ (problikávalo při načtení stránky)
       onboardingStep: 1,
+      onbSecWantEnable: true,
       _onboardingChecked: false,
       addWorkerModal: {
         open: false,
@@ -2620,6 +2621,7 @@ createApp({
       m.linInputsDir = s.linux_default_inputs_dir || '/mnt/nas/inputs';
       m.linOutputsDir = s.linux_default_outputs_dir || '/mnt/nas/outputs';
       m.linTempDir = s.linux_default_temp_dir || '/mnt/nvme/hb_temp';
+      this.onbSecWantEnable = !this.secInfo.enabled;
       this.onboardingStep = Number(step) || 1;
       this.showOnboardingModal = true;
     },
@@ -2629,6 +2631,17 @@ createApp({
         this.addWorkerModal.managerUrl = window.location.origin;
       }
       if (this.onboardingStep === 1 && nextStep !== 1) {
+        if (!this.secInfo.enabled && this.onbSecWantEnable) {
+          if (this.secForm.new1) {
+            const ok = await this.securityEnable();
+            if (!ok) return;
+          } else {
+            this.toast(this.t('onb_sec_need_pw_or_off'), 'warn');
+            const el = typeof document !== 'undefined' ? document.getElementById('onb_sec_new1') : null;
+            if (el) el.focus();
+            return;
+          }
+        }
         const s = this.state.settings || {};
         this.addWorkerModal.winInputsDir = s.win_default_inputs_dir || '';
         this.addWorkerModal.winOutputsDir = s.win_default_outputs_dir || '';
@@ -3056,18 +3069,20 @@ createApp({
     },
     async securityEnable() {
       const f = this.secForm;
-      if ((f.new1 || '').length < 8) { this.toast(this.t('toast_sec_pw_short'), 'warn'); return; }
-      if (f.new1 !== f.new2) { this.toast(this.t('toast_sec_pw_mismatch'), 'warn'); return; }
+      if ((f.new1 || '').length < 8) { this.toast(this.t('toast_sec_pw_short'), 'warn'); return false; }
+      if (f.new1 !== f.new2) { this.toast(this.t('toast_sec_pw_mismatch'), 'warn'); return false; }
       f.busy = true;
       const r = await this.apiFetch('/api/v2/security/enable', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: f.new1, remember: !!f.remember }) });
       const d = await r.json().catch(() => ({}));
       f.busy = false;
-      if (!r.ok) { this.toast(this._secErrMsg(d), 'error'); return; }
+      if (!r.ok) { this.toast(this._secErrMsg(d), 'error'); return false; }
       this._secApply(d);
       this.secForm = { ...this.secForm, new1: '', new2: '' };
       this.secHasSession = true;
       this.toast(this.t('toast_sec_enabled'));
       this.securityLoadDevices();
+      if (this.showOnboardingModal) this.ensureDlToken(true);
+      return true;
     },
     async securityChangePassword() {
       const f = this.secForm;

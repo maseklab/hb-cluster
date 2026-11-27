@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest an improvement or a new feature for HB Cluster
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe your encoding or cluster workflow and what is missing today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like it to work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Environment, HandBrake settings, screenshots, or related tools (optional).

@@ -16,7 +16,8 @@ Synchronizuje pouze místa, kde verze zůstat musí:
   - (workery verzi čtou jen ze souboru VERSION – literály pro workery <= 2.11.4ZH zrušeny v2.12.0, O3;
     kontrola níže hlídá, aby se do workers/*.py nevrátily)
   - OCI label org.opencontainers.image.version v obou Dockerfile (kontroluje CI)
-  - (README.md už verzi neobsahuje – odznak „release“ ukazuje poslední vydání automaticky)
+  - (odznak „release“ v README = docs/badges/release.svg; verzi v něm přepisuje při vydání scripts/release.py,
+     --check hlídá, že odznaky odpovídají scripts/badges.py a u vydané verze X.Y.Z sedí s VERSION)
 Build číslo HBWorker.exe se odvozuje ze semveru v workers/launcher_builder.py (nic se neukládá).
 """
 import hashlib
@@ -109,6 +110,16 @@ def check_locales_parity() -> list:
     return [] if ha == hb else [f"locales.js ({ha[:12]}) != workers/locales.js ({hb[:12]})"]
 
 
+def check_badges(ver: str) -> list:
+    """Lokální odznaky README (docs/badges/) – viz scripts/badges.py."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import badges
+    except Exception as e:
+        return [f"scripts/badges.py nejde načíst: {e}"]
+    return badges.check(ver)
+
+
 def main(argv: list) -> int:
     if len(argv) != 2 or argv[1] in ("-h", "--help"):
         print(__doc__)
@@ -129,6 +140,8 @@ def main(argv: list) -> int:
     problems += check_locales_parity()
     problems += check_windows_package()
     problems += check_no_worker_literals()
+    # při zápisu (i z release.py) se shoda verze nekontroluje – odznak release.py přepíše až po bump_version
+    problems += check_badges(ver if check_only else "")
     if problems:
         print("[!] Nalezené problémy:")
         for p in problems:
